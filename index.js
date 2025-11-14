@@ -30,8 +30,9 @@ async function run (){
         const db = client.db('smart_db')
         const transactionsCollection = db.collection('transactions');
         const usersCollection = db.collection('users');
+        const reportsCollection = db.collection('reports');
 
-
+// user api
         app.post('/users',async(req, res)=> {
             const newUser = req.body;
 
@@ -48,6 +49,7 @@ async function run (){
             
         })
 
+//transaction api
         app.get('/transactions', async(req, res)=>{
 
             console.log(req.query)
@@ -57,10 +59,17 @@ async function run (){
                 query.email = email;
             }
 
-            const cursor = transactionsCollection.find(query).sort({amount: -1 , date: -1});
+            const cursor = transactionsCollection.find(query);
             const result = await cursor.toArray();
             res.send(result)
         });
+
+        app.get('/transaction-balance',async(req,res)=>{
+            const cursor = transactionsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
 
         app.get('/transactions/:id',async ( req, res)=>{
             const id = req.params.id;
@@ -69,25 +78,59 @@ async function run (){
             res.send(result);
         })
 
-        app.post('/transactions',async (req, res) =>{
-                const newTransaction = req.body;
-                const result = await transactionsCollection.insertOne(newTransaction);
-                res.send(result);
-        })
+        // app.post('/transactions',async (req, res) =>{
+        //         const newTransaction = req.body;
+        //         const result = await transactionsCollection.insertOne(newTransaction);
+        //         res.send(result);
+        // })
         
-        app.patch('/transactions/:id', async(req, res)=>{
-            const id = req.params.id;
-            const updatedTransaction = req.body;
-            const query = { _id: new ObjectId(id)}
-            const update = {
-                $set: {
-                    name: updatedTransaction.name,
-                    price: updatedTransaction.price
-                }
-            }
-            const result = await transactionsCollection.updateOne(query, update)
-            res.send(result)
-        })
+        // app.patch('/transactions/:id', async(req, res)=>{
+        //     const id = req.params.id;
+        //     const updatedTransaction = req.body;
+        //     const query = { _id: new ObjectId(id)}
+        //     const update = {
+        //         $set: {
+        //             name: updatedTransaction.name,
+        //             price: updatedTransaction.price
+        //         }
+        //     }
+        //     const result = await transactionsCollection.updateOne(query, update)
+        //     res.send(result)
+        // })
+
+        // ADD TRANSACTION
+app.post('/transactions', async (req, res) => {
+    const data = req.body;
+
+    if (!data.email || !data.amount || !data.category || !data.type) {
+        return res.status(400).send({ message: "Missing fields!" });
+    }
+
+    const result = await transactionsCollection.insertOne(data);
+    res.send(result);
+});
+
+
+// UPDATE TRANSACTION
+app.patch('/transactions/:id', async (req, res) => {
+    const id = req.params.id;
+    const updated = req.body;
+
+    const query = { _id: new ObjectId(id) };
+    const updateDoc = {
+        $set: {
+            type: updated.type,
+            category: updated.category,
+            amount: updated.amount,
+            description: updated.description,
+            date: updated.date,
+        }
+    };
+
+    const result = await transactionsCollection.updateOne(query, updateDoc);
+    res.send(result);
+});
+
 
         app.delete('/transactions/:id',async(req, res)=>{
             const id = req.params.id;
@@ -95,6 +138,19 @@ async function run (){
             const result = await transactionsCollection.deleteOne(query);
             res.send(result);
         })
+
+        app.get('/reports',async(req, res)=>{
+            const email = req.query.email;
+            const query = {};
+            if(email){
+                query.email = email;
+            }
+
+            const cursor = reportsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
