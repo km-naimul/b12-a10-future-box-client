@@ -20,13 +20,13 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const db = client.db('smart_db');
 
     const transactionsCollection = db.collection('transactions');
     const usersCollection = db.collection('users');
-    const budgetsCollection = db.collection('budgets');     // new
-    const savingsCollection = db.collection('savings');     // new
+    const budgetsCollection = db.collection('budgets');    
+    const savingsCollection = db.collection('savings');     
     const reportsCollection = db.collection('reports');
     app.get('/', (req, res) => {
       res.send('Smart server is running');
@@ -108,7 +108,7 @@ app.post("/budget", async (req, res) => {
 });
 app.get('/expenses-summary-monthly', async (req, res) => {
   const email = req.query.email;
-  const month = parseInt(req.query.month); // 1-12
+  const month = parseInt(req.query.month); 
 
   if (!email || !month) {
     return res.status(400).send({ message: "Email and month required" });
@@ -228,18 +228,14 @@ app.get("/savings", async (req, res) => {
   res.send(result);
 });
 
-app.get("/savings", async (req, res) => {
-  const result = await savingsCollection.find({ email: req.query.email }).toArray();
-  res.send(result);
-});
-
     app.get('/transaction-balance', async (req, res) => {
       const email = req.query.email;
       if (!email) return res.status(400).send({ message: "Email required" });
       const result = await transactionsCollection.find({ email }).toArray();
       res.send(result);
-    });
+    })
 
+    // await client.db("admin").command({ ping: -1 });
     console.log('Connected to MongoDB and routes are ready.');
   } finally {
 
